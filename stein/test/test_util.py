@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 import numpy as np
-import numpy.linalg as LA
 import pytest
 from dimod.vartypes import Vartype
 from numpy.testing import assert_almost_equal
