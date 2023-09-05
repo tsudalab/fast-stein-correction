@@ -25,7 +25,6 @@ jobs:
         python-version: "3.11"
     - name: Install dependencies
       run: |
-        sudo apt install libgdal-dev
         python -m pip install --upgrade pip
         pip install flake8 pytest isort black
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
