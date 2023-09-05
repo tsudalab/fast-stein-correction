@@ -3,7 +3,7 @@ import os
 import pickle
 import time
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import dimod
 import matplotlib.pyplot as plt
@@ -31,18 +31,6 @@ def onedown(x: List[int], idx: int, vartype: Vartype):
         raise NotImplementedError
 
 
-def onedown_by_h(x: List[float], idx: int, h: float):
-    if idx < 0 or idx >= len(x):
-        raise IndexError(
-            f"Index must be between 0 and {len(x)-1}, but actual was {idx}"
-        )
-    return np.array([a - h if i == idx else a for i, a in enumerate(x)])
-
-
-def oneup_by_h(x: List[float], idx: int, h: float):
-    return onedown_by_h(x, idx, -h)
-
-
 def get_all_flipped(X: List[List[int]], dim: int, vartype: Vartype) -> List[List[int]]:
     X_set = set()
     if len(X.shape) != 2:
@@ -63,23 +51,6 @@ def get_stein_score(x: List[int], distrib: AbstractDistribution, vartype: Vartyp
         list(
             map(
                 lambda i: 1 - distrib.pmf(onedown(x, i, vartype)) / distrib.pmf(x),
-                np.arange(len(x)),
-            )
-        )
-    )
-
-
-def get_stein_score_continuous(
-    x: List[float], func: Callable[[List[float]], float], h: float
-):
-    """
-    difference score function
-    Be aware that the score is implemented in a different way for computational efficiency.
-    """
-    return np.array(
-        list(
-            map(
-                lambda i: (1 - func(oneup_by_h(x, i, h)) / func(x)),
                 np.arange(len(x)),
             )
         )

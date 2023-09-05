@@ -6,14 +6,7 @@ import numpy.linalg as LA
 from dimod.vartypes import Vartype
 
 from .stats import AbstractDistribution
-from .util import (
-    get_all_flipped,
-    get_stein_score,
-    get_stein_score_continuous,
-    onedown,
-    onedown_by_h,
-    spin2binary,
-)
+from .util import get_all_flipped, get_stein_score, onedown, spin2binary
 
 
 class KernelType(Enum):
@@ -180,17 +173,5 @@ class SteinBasis:
                     x_stein_basis = np.append(x_stein_basis, v)
                 stein_basis.append(x_stein_basis)
             return np.array(stein_basis)
-        elif vartype == Vartype.REAL:
-            stein_basis = []
-            for x in X:
-                x_stein_basis = np.array([])
-                x_score = get_stein_score_continuous(x, self._func, self._h)
-                key = tuple(x)
-                for i, score in enumerate(x_score):
-                    x_down = onedown_by_h(x, i, self._h)
-                    v = (1 - score) * self._fourier.get_basis(
-                        x, vartype=vartype
-                    ) - self._fourier.get_basis(x_down, vartype=vartype)
-                    x_stein_basis = np.append(x_stein_basis, v)
-                stein_basis.append(x_stein_basis / self._h)
-            return np.array(stein_basis)
+        else:
+            raise NotImplementedError

@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 import numpy as np
-import numpy.linalg as LA
 import pytest
 from dimod.vartypes import Vartype
 from numpy.testing import assert_almost_equal
@@ -13,10 +12,7 @@ from ..util import (
     gauge_transformation,
     get_all_flipped,
     get_stein_score,
-    get_stein_score_continuous,
     onedown,
-    onedown_by_h,
-    oneup_by_h,
     scale_J_h,
 )
 
@@ -52,56 +48,6 @@ class TestOneDown:
             IndexError, match="Index must be between 0 and 2, but actual was -1"
         ):
             _ = onedown(x, -1, Vartype.BINARY)
-
-
-class TestOneDownByH:
-    def test_onedown_by_h(self):
-        x = np.array([0.1, 0, -0.1])
-        actual = onedown_by_h(x, 0, 0.000001)
-        expected = np.array([0.1 - 0.000001, 0, -0.1])
-        assert_almost_equal(expected, actual)
-        x = np.array([0.1, 0, -0.1])
-        actual = onedown_by_h(x, 2, 0)
-        expected = np.array([0.1, 0, -0.1])
-        assert_almost_equal(expected, actual)
-
-    def test_onedown_for_exception(self):
-        x = np.array([0, 0, 1])
-        with pytest.raises(
-            IndexError, match="Index must be between 0 and 2, but actual was 3"
-        ):
-            _ = onedown_by_h(x, 3, 0.1)
-        with pytest.raises(
-            IndexError, match="Index must be between 0 and 2, but actual was -1"
-        ):
-            _ = onedown_by_h(x, -1, 0.1)
-
-
-class TestOneUpByH:
-    def test_oneup_by_h(self):
-        x = np.array([0.1, 0, -0.1])
-        actual = oneup_by_h(x, 0, 0.000001)
-        expected = np.array([0.1 + 0.000001, 0, -0.1])
-        assert_almost_equal(expected, actual)
-        x = np.array([0.1, 0, -0.1])
-        actual = oneup_by_h(x, 2, 0)
-        expected = np.array([0.1, 0, -0.1])
-        assert_almost_equal(expected, actual)
-        x = np.array([0.1, 0, -0.1])
-        actual = oneup_by_h(x, 2, -0.2)
-        expected = np.array([0.1, 0, -0.3])
-        assert_almost_equal(expected, actual)
-
-    def test_onedown_for_exception(self):
-        x = np.array([0, 0, 1])
-        with pytest.raises(
-            IndexError, match="Index must be between 0 and 2, but actual was 3"
-        ):
-            _ = oneup_by_h(x, 3, 0.1)
-        with pytest.raises(
-            IndexError, match="Index must be between 0 and 2, but actual was -1"
-        ):
-            _ = oneup_by_h(x, -1, 0.1)
 
 
 class TestGetAllFlippedData:
@@ -170,24 +116,6 @@ class TestGetSteinScore:
         tmp1 = 1 - np.exp(-5) / np.exp(-13)
         tmp2 = 1 - np.exp(-8) / np.exp(-13)
         expected = np.array([tmp1, tmp1, tmp1, tmp2, tmp2, tmp2])
-        assert_almost_equal(s, expected)
-
-
-class TestGetSteinScoreContinuous:
-    def test_get_stein_score_continuous(self):
-        def gaussian(x):
-            return np.exp(-LA.norm(x) ** 2 / 2)
-
-        x = np.zeros(6)
-        h = 0.01
-        s = get_stein_score_continuous(x, gaussian, h)
-        x_up = [oneup_by_h(x, i, h) for i in range(len(x))]
-        expected = np.array([1 - gaussian(e) / gaussian(x) for e in x_up])
-        assert_almost_equal(s, expected)
-        h = 1e-5
-        s = get_stein_score_continuous(x, gaussian, h)
-        x_up = [oneup_by_h(x, i, h) for i in range(len(x))]
-        expected = np.array([1 - gaussian(e) / gaussian(x) for e in x_up])
         assert_almost_equal(s, expected)
 
 
