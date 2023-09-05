@@ -7,7 +7,4 @@ from .kernel import (
     hamming_kernel,
     laplace_kernel,
 )
-from .stats import (
-    EmpiricalDistribution,
-    GibbsDistribution,
-)
+from .stats import EmpiricalDistribution, GibbsDistribution

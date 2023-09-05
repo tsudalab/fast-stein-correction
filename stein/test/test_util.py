@@ -7,9 +7,7 @@ from dimod.vartypes import Vartype
 from numpy.testing import assert_almost_equal
 
 from ..energy import sample_energy
-from ..stats import (
-    GibbsDistribution,
-)
+from ..stats import GibbsDistribution
 from ..util import (
     IsingSampler,
     gauge_transformation,
