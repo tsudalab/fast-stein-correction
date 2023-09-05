@@ -15,7 +15,7 @@ from ..kernel import (
     laplace_kernel,
 )
 from ..stats import GibbsDistribution
-from ..util import get_stein_score, get_stein_score_continuous, onedown, onedown_by_h
+from ..util import get_stein_score, onedown
 
 
 class TestGaussianKernel:
@@ -274,25 +274,6 @@ def stein_kernel(
     return v
 
 
-def stein_kernel_real(
-    x: List[float],
-    xp: List[float],
-    sx: List[float],
-    sxp: List[float],
-    kernel: Callable[[List[float]], float],
-    h: float,
-) -> float:
-    v = 0
-    domain_dim = len(x)
-    base_kernel = kernel(x, xp)
-    for k in range(domain_dim):
-        v += base_kernel * (1 - sx[k]) * (1 - sxp[k])
-        v -= (1 - sx[k]) * kernel(x, onedown_by_h(xp, k, h))
-        v -= (1 - sxp[k]) * kernel(onedown_by_h(x, k, h), xp)
-        v += kernel(onedown_by_h(x, k, h), onedown_by_h(xp, k, h))
-    return v / h**2
-
-
 class TestSteinBasis:
     def test_get_basis_single(self):
         def hamiltonian(x):
@@ -523,75 +504,3 @@ class TestSteinBasis:
                 v = stein_kernel(x, xp, score_x, score_xp, vartype, kernel)
                 print(x, xp)
                 assert_almost_equal(X_basis[i].dot(X_basis[j]), v, decimal=1)
-
-    def test_get_basis_gaussian_real(self):
-        def func(x: List[float]) -> float:
-            return np.exp(-LA.norm(x) ** 2 / 2)
-
-        X = np.array(
-            [
-                np.array([1.1, 0.2, 0.6]),
-                np.array([-0.1, 0.4, 0.2]),
-                np.array([0.7, -1.4, -2]),
-            ]
-        )
-        domain_dim = 3
-        feature_dim = 10000
-        vartype = Vartype.REAL
-        kernel_type = KernelType.Gaussian
-        kernel = gaussian_kernel
-        h = 1e-7
-        stein_basis = SteinBasis(
-            domain_dim=domain_dim,
-            feature_dim=feature_dim,
-            func=func,
-            kernel_type=kernel_type,
-            h=h,
-        )
-        X_basis = stein_basis.get_basis(X, vartype=vartype)
-        score_list = np.array([get_stein_score_continuous(x, func, h) for x in X])
-        for i in range(len(X)):
-            for j in range(i, len(X)):
-                x, xp = X[i], X[j]
-                score_x = score_list[i]
-                score_xp = score_list[j]
-                v = stein_kernel_real(x, xp, score_x, score_xp, kernel, h)
-                print(x, xp)
-                assert_almost_equal(X_basis[i].dot(X_basis[j]), v, decimal=1)
-
-    def test_get_basis_laplace_real(self):
-        def func(x: List[float]) -> float:
-            return np.exp(-LA.norm(x) / 2)
-
-        X = np.array(
-            [
-                np.array([1.1, 0.2, 0.6]),
-                np.array([-0.1, 0.4, 0.2]),
-                np.array([0.7, -1.4, -2]),
-            ]
-        )
-        domain_dim = 3
-        feature_dim = 10000
-        vartype = Vartype.REAL
-        kernel_type = KernelType.Laplace
-        kernel = laplace_kernel
-        h = 1e-1
-        stein_basis = SteinBasis(
-            domain_dim=domain_dim,
-            feature_dim=feature_dim,
-            func=func,
-            kernel_type=kernel_type,
-            h=h,
-        )
-        X_basis = stein_basis.get_basis(X, vartype=vartype)
-        score_list = np.array([get_stein_score_continuous(x, func, h) for x in X])
-        for i in range(len(X)):
-            for j in range(i, len(X)):
-                x, xp = X[i], X[j]
-                score_x = score_list[i]
-                score_xp = score_list[j]
-                v = stein_kernel_real(x, xp, score_x, score_xp, kernel, h)
-                print(x, xp)
-                assert_almost_equal(
-                    X_basis[i].dot(X_basis[j]) / 100, v / 100, decimal=1
-                )

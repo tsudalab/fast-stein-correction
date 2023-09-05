@@ -16,7 +16,7 @@ from .kernel import (
     laplace_kernel,
 )
 from .stats import AbstractDistribution
-from .util import get_stein_score, get_stein_score_continuous, onedown, onedown_by_h
+from .util import get_stein_score, onedown
 
 solvers.options["show_progress"] = False
 
