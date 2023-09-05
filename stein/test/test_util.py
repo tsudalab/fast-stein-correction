@@ -8,7 +8,6 @@ from numpy.testing import assert_almost_equal
 
 from ..energy import sample_energy
 from ..stats import (
-    EmpiricalDistribution,
     GibbsDistribution,
 )
 from ..util import (
