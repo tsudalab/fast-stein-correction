@@ -38,24 +38,15 @@ def create_hamiltonian(J: defaultdict, h: defaultdict) -> Callable:
 
     def hamiltonian(x: List[int]) -> float:
         t1, t2 = 0, 0
-        if len(qubits) != len(x):
-            print(len(qubits), len(x), x)
         assert len(qubits) == len(x)
         # convert a bit vector into a state vector
         state = defaultdict(int, ((qubits[i], x[i]) for i in range(len(qubits))))
         for i in range(len(qubits)):
             si = qubits[i]
-            try:
-                t2 += h[si] * state[si]
-            except KeyError:
-                pass
+            t2 += h[si] * state[si]
             for j in range(i + 1, len(qubits)):
                 sj = qubits[j]
-                try:
-                    t1 += J[(si, sj)] * state[sj] * state[si]
-                except KeyError:
-                    # print(f'value is not assigned for {(si, sj)}.')
-                    pass
+                t1 += J[(si, sj)] * state[sj] * state[si]
         return t1 + t2
 
     return hamiltonian

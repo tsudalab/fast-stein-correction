@@ -7,4 +7,5 @@ from .kernel import (
     hamming_kernel,
     laplace_kernel,
 )
+from .ksd import *
 from .stats import EmpiricalDistribution, GibbsDistribution
