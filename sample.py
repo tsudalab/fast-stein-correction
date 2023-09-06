@@ -49,10 +49,9 @@ def H(x):
 # H = create_hamiltonian(J, h)
 
 # Input your samples and target inverse temperature $\beta$
-
-
-X = IsingSampler.random([-1, 1], 6, 50)
-X = np.array(list(set([tuple(x) for x in X])))
+num = 50
+X_ = IsingSampler.random([-1, 1], dim, num)
+X = np.array(list(set([tuple(x) for x in X_])))
 beta = 1.5
 weights = boltzmann_correction(
     dim=dim,
@@ -66,16 +65,19 @@ weights = boltzmann_correction(
 )
 # Compute physical quantity of your interest.
 
-
 trg = GibbsDistribution(H, beta, dim, True, Vartype.SPIN)
 energy = 0
 for x in trg.pmf_dict.keys():
     energy += trg.pmf(x) * H(x)
-print(energy)  # -> -4.890741339705588
+print("Exact", energy)  # -> -4.890741339705588
+
+energy = 0
+for x in X_:
+    energy += H(x) / len(X_)
+print("Empirical:", energy)
 
 # Exact value is approximated by the weights.
-
 energy = 0
 for w, x in zip(weights, X):
     energy += w * H(x)
-print(energy)
+print("Stein correction:", energy)

@@ -63,7 +63,7 @@ Whole code is in [`sample.py`](./sample.py).
    H = create_hamiltonian(J, h)
    ```
 
-2. Input your samples and target inverse temperature $\beta$
+2. Input your samples and a target inverse temperature $\beta$
    ```python
    from stein.ksd import boltzmann_correction
    from stein.util import IsingSampler
@@ -72,7 +72,8 @@ Whole code is in [`sample.py`](./sample.py).
 
    import numpy as np
 
-   X = IsingSampler.random([-1, 1], 6, 50)
+   num = 50
+   X = IsingSampler.random([-1, 1], 6, num)
    X = np.array(list(set([tuple(x) for x in X])))
    beta = 1.5
    weights = boltzmann_correction(
@@ -88,11 +89,12 @@ Whole code is in [`sample.py`](./sample.py).
    ```python
    from stein.stats import GibbsDistribution
 
+   # True means a normalization constant for Boltzmann distribution is computed.
    trg = GibbsDistribution(H, beta, dim, True, Vartype.SPIN)
    energy = 0
    for x in trg.pmf_dict.keys():
        energy += trg.pmf(x) * H(x)
-   print(energy) # -> -8.970194350573502
+   print("Exact", energy) # -> -8.970194350573502
    ```
 
    Exact value is approximated by the weights.
@@ -101,7 +103,14 @@ Whole code is in [`sample.py`](./sample.py).
    energy = 0
    for w, x in zip(weights, X):
        energy += w * H(x)
-   print(energy)
+   print("Stein correction:", energy)
+   ```
+
+   ```
+   $ python sample.py
+   Exact -8.970194350573502
+   Empirical: -0.04000000000000008
+   Stein correction: -8.999999999999998
    ```
 
 ## Reproducing our experimental results
