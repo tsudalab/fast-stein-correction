@@ -1,7 +1,7 @@
 # fast-stein-correction
 Implementation of "Boltzmann sampling with quantum annealers via fast Stein correction"
 
-# Environment setup
+## Environment setup
 
 ```
 $ python --version
@@ -11,7 +11,7 @@ $ source activate .venv/bin
 $ pip install -r requirements.txt
 ```
 
-# Usage
+## Usage
 
 We show how to apply fast stein correction to your problems.
 Whole code is in [`sample.py`](./sample.py).
@@ -104,11 +104,11 @@ Whole code is in [`sample.py`](./sample.py).
    print(energy)
    ```
 
-# Reproducing our experimental results
+## Reproducing our experimental results
 
 We provide the source code for the experiments and shell scripts to generate the figure in the ```notebooks/``` directory.
 
-## Preparation
+### Preparation
 
 Run scripts to pre-compute exact values for each problem.
 
@@ -117,7 +117,7 @@ $ cd notebook
 $ sh prepare.sh
 ```
 
-## Running experiments and plot
+### Running experiments and plot
 
 ```
 $ sh run_experiments.sh
