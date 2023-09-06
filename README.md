@@ -18,7 +18,6 @@ Whole code is in [`sample.py`](./sample.py).
 
 1. Define your Hamiltonian on binary domain.
    ```python
-   from stein.energy import create_hamiltonian
    dim = 6
    J = {
        (0, 1): -1.0,
@@ -56,6 +55,11 @@ Whole code is in [`sample.py`](./sample.py).
                t += J[(i, j)] * x[i] * x[j]
        return t
 
+   ```
+   We provide an utility function `create_hamiltonian` to define Ising Hamiltonian given $J$ and $h$.
+
+   ```python
+   from stein.energy import create_hamiltonian
    H = create_hamiltonian(J, h)
    ```
 
