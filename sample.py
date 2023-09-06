@@ -1,12 +1,13 @@
 from stein.energy import create_hamiltonian
-dim = 6
-from stein.ksd import boltzmann_correction
-from stein.util import IsingSampler
 
-from stein.stats import GibbsDistribution
+dim = 6
+import numpy as np
 from dimod.vartypes import Vartype
 
-import numpy as np
+from stein.ksd import boltzmann_correction
+from stein.stats import GibbsDistribution
+from stein.util import IsingSampler
+
 J = {
     (0, 1): -1.0,
     (0, 2): -1.0,
@@ -34,14 +35,16 @@ h = {
     5: -1.0,
 }
 
+
 def H(x):
     assert len(x) == dim
     t = 0
     for i in range(len(x)):
         t += h[i] * x[i]
-        for j in range(i+1, len(x)):
+        for j in range(i + 1, len(x)):
             t += J[(i, j)] * x[i] * x[j]
     return t
+
 
 # H = create_hamiltonian(J, h)
 
@@ -59,7 +62,7 @@ weights = boltzmann_correction(
     vartype=Vartype.SPIN,
     eta=1e-5,
     n_iter=2000,
-    feature_dim=5000
+    feature_dim=5000,
 )
 # Compute physical quantity of your interest.
 
@@ -68,7 +71,7 @@ trg = GibbsDistribution(H, beta, dim, True, Vartype.SPIN)
 energy = 0
 for x in trg.pmf_dict.keys():
     energy += trg.pmf(x) * H(x)
-print(energy) # -> -4.890741339705588
+print(energy)  # -> -4.890741339705588
 
 # Exact value is approximated by the weights.
 
