@@ -6,7 +6,6 @@ from collections import defaultdict
 from typing import Any, Dict, List, Tuple
 
 import dimod
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dimod import SampleSet, concatenate
@@ -162,52 +161,6 @@ def dwave_sampling(
         h, J = gauge_transformation(h, J)
         time.sleep(0.03)
     return concatenate(samplesets).aggregate()
-
-
-def save_energy_hist_img(
-    energy_list: List[float], selected_energy_list: List[float], file_name: str
-):
-    hist, selected_hist = defaultdict(int), defaultdict(int)
-    for e in energy_list:
-        hist[e] += 1
-    for e in selected_energy_list:
-        selected_hist[e] += 1
-    enes = sorted(list(hist.keys()))  # All energies appeared in initial population
-    ene_freq_norm = [hist[k] for k in enes]
-    selected_ene_freq_norm = [selected_hist[k] for k in enes]
-    width = 0.35
-    fig, ax = plt.subplots()
-    x = np.arange(len(enes))
-    _ = ax.bar(x - width / 2, ene_freq_norm, width, label="Initial population")
-    _ = ax.bar(
-        x + width / 2, selected_ene_freq_norm, width, label="Selected population"
-    )
-
-    # Add text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel("Normalized frequency grouped by the function value")
-    ax.set_xlabel("Energy")
-    ax.set_ylim(0, len(energy_list))
-    ax.set_title("Distribution of black-box function value")
-    ax.set_xticks(x, enes)
-    ax.legend()
-
-    # ax.bar_label(rects1, padding=3)
-    # ax.bar_label(rects2, padding=3)
-
-    fig.tight_layout()
-
-    plt.savefig(file_name)
-
-
-def history_filter(history_ref, f):
-    history = []
-    for h in history_ref:
-        if len(history) == 0:
-            history.append(h)
-        else:
-            t = f(f(history), h)
-            history.append(t)
-    return history
 
 
 def binary2spin(x):

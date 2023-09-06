@@ -15,7 +15,7 @@ from .kernel import (
     hamming_kernel,
     laplace_kernel,
 )
-from .stats import AbstractDistribution
+from .stats import AbstractDistribution, GibbsDistribution
 from .util import get_stein_score, onedown
 
 solvers.options["show_progress"] = False
@@ -181,7 +181,9 @@ class DiscreteKSD:
         for _ in range(n_iter):
             # flake8: noqa
             grad = (K + K.T).dot(w)
+            # eta = eta / np.max(grad)
             w_n = ne.evaluate(f"w * exp(- {eta} * grad)")
+            # print(w_n)
             w_n /= sum(w_n)
             history.append(w_n)
             tmp = w_n.dot(K).dot(w_n)
@@ -197,3 +199,59 @@ class DiscreteKSD:
     def get_important_sample_with_probability(self) -> Tuple[List[int], float]:
         idx = np.argmax(self.weight)
         return self.samples[idx], self.weight[idx]
+
+
+def boltzmann_correction(
+    dim: int,
+    samples: List[List[int]],
+    beta: float,
+    hamiltonian: Callable,
+    vartype: Vartype,
+    kernel_type=KernelType.Hamming,
+    n_iter=2000,
+    eta=1e-5,
+    feature_dim=5000,
+):
+    """Utility function to perform Stein correction about Gibbs-Boltzmann distribution.
+
+    Parameters
+    ----------
+    dim :
+        Dimension of a sample retrieved in the target space.
+
+    samples :
+        A kernel function for performing
+        the Kernelized Discrete Stein Discrepancy test.
+
+    beta :
+        Target inverse temperature of your interest.
+
+    hamiltonian :
+        A function representing hamiltonian.
+        Takes a binary vector as an input and returns an internal energy.
+
+    vartype :
+        Specify dimod.vartypes.Vartype.SPIN or dimod.vartypes.Vartype.BINARY.
+
+    kernel_type :
+        Specify one of stein.kernel.KernelType.Hamming or stein.kernel.KernelType.Gaussian or stein.kernel.KernelType.Laplace.
+
+    n_iter :
+        Number of iteration for the exponentiated gradient descent.
+
+    eta :
+        Learning rate for the exponentiated gradient descent.
+
+    feature_dim :
+        Number of random features for approximating base kernel.
+    """
+    trg = GibbsDistribution(hamiltonian, beta, dim, False, vartype)
+    ksd = DiscreteKSD(
+        dim=dim,
+        kernel_type=kernel_type,
+        distrib=trg,
+        vartype=vartype,
+    )
+    ksd.fit_egd(samples, n_iter=n_iter, eta=eta, feature_dim=feature_dim)
+    weights = ksd.weight
+    return weights
