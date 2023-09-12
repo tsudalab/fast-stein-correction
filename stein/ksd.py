@@ -211,6 +211,7 @@ def boltzmann_correction(
     n_iter=2000,
     eta=1e-5,
     feature_dim=5000,
+    mode="egd"
 ):
     """Utility function to perform Stein correction about Gibbs-Boltzmann distribution.
 
@@ -252,6 +253,14 @@ def boltzmann_correction(
         distrib=trg,
         vartype=vartype,
     )
-    ksd.fit_egd(samples, n_iter=n_iter, eta=eta, feature_dim=feature_dim)
-    weights = ksd.weight
+    start = np.ones(len(samples)) / len(samples)
+    weights = np.copy(start)
+    if mode == "egd":
+        ksd.fit_egd(samples, n_iter=n_iter, eta=eta, feature_dim=feature_dim)
+    elif mode == "cvxopt":
+        basis = ksd.compute_KP_basis(samples, feature_dim=5000)
+        ksd.KP = basis.dot(basis.T)
+        ksd.fit(samples, start)
+    if ksd.weight is not None:
+        weights = ksd.weight
     return weights
