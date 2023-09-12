@@ -211,7 +211,7 @@ def boltzmann_correction(
     n_iter=2000,
     eta=1e-5,
     feature_dim=5000,
-    mode="egd"
+    mode="egd",
 ):
     """Utility function to perform Stein correction about Gibbs-Boltzmann distribution.
 
