@@ -69,7 +69,7 @@ trg = GibbsDistribution(H, beta, dim, True, Vartype.SPIN)
 energy = 0
 for x in trg.pmf_dict.keys():
     energy += trg.pmf(x) * H(x)
-print("Exact", energy)  # -> -4.890741339705588
+print("Exact", energy)  # -> -8.970194350573502
 
 energy = 0
 for x in X_:
