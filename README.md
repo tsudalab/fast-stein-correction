@@ -74,16 +74,17 @@ Whole code is in [`sample.py`](./sample.py).
 
    import numpy as np
 
-   num = 50
+   num = 150
    X = IsingSampler.random([-1, 1], 6, num)
    X = np.array(list(set([tuple(x) for x in X])))
-   beta = 1.5
+   beta = 0.5
    weights = boltzmann_correction(
        dim=dim,
        samples=X,
        beta=beta,
        hamiltonian=H,
-       vartype=Vartype.SPIN
+       vartype=Vartype.SPIN,
+       mode="egd",
    )
    ```
 
@@ -96,7 +97,7 @@ Whole code is in [`sample.py`](./sample.py).
    energy = 0
    for x in trg.pmf_dict.keys():
        energy += trg.pmf(x) * H(x)
-   print("Exact", energy) # -> -8.970194350573502
+   print("Exact", energy) # -> -7.297344197572726
    ```
 
    Exact value is approximated by the weights.
@@ -110,9 +111,7 @@ Whole code is in [`sample.py`](./sample.py).
 
    ```
    $ python sample.py
-   Exact -8.970194350573502
-   Empirical: -0.04000000000000008
-   Stein correction: -8.999999999999998
+   Exact: -7.297344197572726, empirical: 0.52, Stein correction(egd): -6.69995997268694
    ```
 
 ## Reproducing our experimental results

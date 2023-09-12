@@ -3,7 +3,7 @@ import numpy.linalg as LA
 from dimod.vartypes import Vartype
 from numpy.testing import assert_almost_equal
 
-from ..energy import sample_energy
+from ..energy import create_hamiltonian, sample_energy
 from ..kernel import KernelType
 from ..ksd import DiscreteKSD
 from ..stats import EmpiricalDistribution, GibbsDistribution
@@ -15,6 +15,15 @@ def int2bin(i, dim):
     z = np.zeros(dim, dtype="i1")
     for j in range(dim):
         z[j] = int(y[j])
+    return z
+
+
+def int2spin(i, dim):
+    y = format(i, f"0{dim}b")
+    # z denotes a state: e.x. [-1, 1, -1, -1, 1, -1]
+    z = np.zeros(dim, dtype="i1")
+    for j in range(dim):
+        z[j] = 2 * int(y[j]) - 1
     return z
 
 
@@ -70,6 +79,11 @@ class TestDiscreteKSD:
         assert_almost_equal(1, sum(ksd.weight))
 
     def test_fit_accuracy(self):
+        """
+        Vartype: BINARY
+        Optimizer: cvxopt
+        kernel: Gaussian
+        """
         # Problem setup
         dim = 6
         ub = 2**dim
@@ -101,6 +115,11 @@ class TestDiscreteKSD:
             assert_almost_equal(corr.pmf(x), ht.pmf(x), decimal=3)
 
     def test_fit_egd(self):
+        """
+        Vartype: BINARY
+        Optimizer: exponentiated gradient descent
+        kernel: Gaussian
+        """
         dim = 6
         ub = 2**dim
         beta = 1  # target temperature
@@ -129,3 +148,125 @@ class TestDiscreteKSD:
             print(x, corr.pmf(x), ht.pmf(x))
         for x in X:
             assert (corr.pmf(x) - ht.pmf(x)) ** 2 < 1e-6
+
+    def test_fit_spin(self):
+        """
+        Vartype: SPIN
+        Optimizer: cvxopt
+        kernel: Hamming
+        """
+        dim = 6
+        J = {
+            (0, 1): -1.0,
+            (0, 2): -1.0,
+            (0, 3): 1.0,
+            (0, 4): -1.0,
+            (0, 5): 1.0,
+            (1, 2): 1.0,
+            (1, 3): -1.0,
+            (1, 4): 1.0,
+            (1, 5): 1.0,
+            (2, 3): -1.0,
+            (2, 4): -1.0,
+            (2, 5): 1.0,
+            (3, 4): 1.0,
+            (3, 5): 1.0,
+            (4, 5): -1.0,
+        }
+
+        h = {
+            0: -1.0,
+            1: -1.0,
+            2: 1.0,
+            3: -1.0,
+            4: 1.0,
+            5: -1.0,
+        }
+        ub = 2**dim
+        beta = 1  # target temperature
+        energy = create_hamiltonian(J, h)
+        ht = GibbsDistribution(
+            energy, beta, dim, compute_pmf=True, vartype=Vartype.SPIN
+        )
+        # Define ksd and related components
+        target = GibbsDistribution(
+            energy, beta, dim, compute_pmf=False, vartype=Vartype.SPIN
+        )
+        X = []
+        for i in range(ub):
+            ztmp = int2spin(i, dim)
+            X.append(ztmp)
+        ksd = DiscreteKSD(
+            dim=dim,
+            kernel_type=KernelType.Hamming,
+            distrib=target,
+            vartype=Vartype.SPIN,
+        )
+        X = np.array(X)
+        ksd.fit(X, np.ones(len(X)) / len(X))
+        corr = EmpiricalDistribution(X, ksd.weight)
+        for x in X:
+            print(x, corr.pmf(x), ht.pmf(x))
+        for x in X:
+            assert (corr.pmf(x) - ht.pmf(x)) ** 2 < 1e-3
+
+    def test_fit_egd_spin(self):
+        """
+        Vartype: SPIN
+        Optimizer: exponentiated gradient descent
+        kernel: Hamming
+        """
+        dim = 6
+        J = {
+            (0, 1): -1.0,
+            (0, 2): -1.0,
+            (0, 3): 1.0,
+            (0, 4): -1.0,
+            (0, 5): 1.0,
+            (1, 2): 1.0,
+            (1, 3): -1.0,
+            (1, 4): 1.0,
+            (1, 5): 1.0,
+            (2, 3): -1.0,
+            (2, 4): -1.0,
+            (2, 5): 1.0,
+            (3, 4): 1.0,
+            (3, 5): 1.0,
+            (4, 5): -1.0,
+        }
+
+        h = {
+            0: -1.0,
+            1: -1.0,
+            2: 1.0,
+            3: -1.0,
+            4: 1.0,
+            5: -1.0,
+        }
+        ub = 2**dim
+        beta = 0.1  # target temperature
+        energy = create_hamiltonian(J, h)
+        ht = GibbsDistribution(
+            energy, beta, dim, compute_pmf=True, vartype=Vartype.SPIN
+        )
+        # Define ksd and related components
+        target = GibbsDistribution(
+            energy, beta, dim, compute_pmf=False, vartype=Vartype.SPIN
+        )
+        X = []
+        for i in range(ub):
+            ztmp = int2spin(i, dim)
+            X.append(ztmp)
+        ksd = DiscreteKSD(
+            dim=dim,
+            kernel_type=KernelType.Hamming,
+            distrib=target,
+            vartype=Vartype.SPIN,
+        )
+        X = np.array(X)
+        ksd.fit_egd(X, feature_dim=5000, n_iter=5000, eta=1e-2)
+        corr = EmpiricalDistribution(X, ksd.weight)
+        for x in X:
+            print(x, corr.pmf(x), ht.pmf(x))
+        for x in X:
+            assert (corr.pmf(x) - ht.pmf(x)) ** 2 < 1e-3
