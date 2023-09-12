@@ -8,7 +8,9 @@ $ python --version
 Python 3.11.0
 $ python -m venv .venv
 $ source activate .venv/bin
-$ pip install -r requirements.txt
+$ git clone git@github.com:tsudalab/fast-stein-correction.git
+$ cd fast-stein-correction
+$ pip install -e .
 ```
 
 ## Usage
