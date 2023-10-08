@@ -2,7 +2,6 @@ import warnings
 from typing import Callable, List, Tuple
 
 import cvxopt
-import numexpr as ne
 import numpy as np
 import numpy.linalg as LA
 from cvxopt import solvers
@@ -175,6 +174,7 @@ class DiscreteKSD:
         if self.X_stein_basis is None:
             self.X_stein_basis = self.compute_KP_basis(X, feature_dim=feature_dim)
         K = self.X_stein_basis.dot(self.X_stein_basis.T)
+        self.KP = K
         assert K.shape == (N, N)
         sd = w.dot(K).dot(w)
         X = np.array(X)
@@ -229,6 +229,7 @@ def boltzmann_correction(
     eta=1e-5,
     feature_dim=5000,
     mode="egd",
+    start=None,
 ):
     """Utility function to perform Stein correction about Gibbs-Boltzmann distribution.
 
@@ -262,6 +263,9 @@ def boltzmann_correction(
 
     feature_dim :
         Number of random features for approximating base kernel.
+
+    start :
+        Initial weights that the egd starts with.
     """
     trg = GibbsDistribution(hamiltonian, beta, dim, False, vartype)
     ksd = DiscreteKSD(
@@ -272,12 +276,15 @@ def boltzmann_correction(
     )
     start = np.ones(len(samples)) / len(samples)
     weights = np.copy(start)
+    hist = None
     if mode == "egd":
-        ksd.fit_egd(samples, n_iter=n_iter, eta=eta, feature_dim=feature_dim)
+        hist = ksd.fit_egd(
+            samples, start, n_iter=n_iter, eta=eta, feature_dim=feature_dim
+        )
     elif mode == "cvxopt":
         basis = ksd.compute_KP_basis(samples, feature_dim=5000)
         ksd.KP = basis.dot(basis.T)
         ksd.fit(samples, start)
     if ksd.weight is not None:
         weights = ksd.weight
-    return weights
+    return weights, ksd.KP, hist
