@@ -279,7 +279,7 @@ def boltzmann_correction(
     hist = None
     if mode == "egd":
         hist = ksd.fit_egd(
-            samples, start, n_iter=n_iter, eta=eta, feature_dim=feature_dim
+            samples, n_iter=n_iter, eta=eta, feature_dim=feature_dim, start=start
         )
     elif mode == "cvxopt":
         basis = ksd.compute_KP_basis(samples, feature_dim=5000)
