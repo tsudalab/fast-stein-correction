@@ -1,3 +1,4 @@
+import warnings
 from typing import Callable, List, Tuple
 
 import cvxopt
@@ -181,10 +182,26 @@ class DiscreteKSD:
         for _ in range(n_iter):
             # flake8: noqa
             grad = (K + K.T).dot(w)
-            # eta = eta / np.max(grad)
-            w_n = ne.evaluate(f"w * exp(- {eta} * grad)")
-            # print(w_n)
-            w_n /= sum(w_n)
+            try:
+                with warnings.catch_warnings(record=True) as warn:
+                    warnings.simplefilter("always")
+                    grad_eta = -eta * grad
+                    w_n = w * np.exp(grad_eta)
+                    w_n /= sum(w_n)
+                    if warn and issubclass(warn[-1].category, RuntimeWarning):
+                        raise RuntimeWarning
+                # w_n = ne.evaluate(f"w * exp(- {eta} * grad)")
+            except RuntimeWarning:
+                # eta = eta / np.max(grad)
+                grad_eta = -eta * grad
+                grad_eta -= np.max(grad_eta)
+                w_n = w * np.exp(grad_eta)
+                if np.max(w_n) == 0:
+                    eta = eta * 0.1
+                    # continue
+                    break
+                w_n /= np.max(w_n)
+                w_n /= sum(w_n)
             history.append(w_n)
             tmp = w_n.dot(K).dot(w_n)
             if tmp < sd:
