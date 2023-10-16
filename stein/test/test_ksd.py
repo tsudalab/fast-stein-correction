@@ -264,7 +264,7 @@ class TestDiscreteKSD:
             vartype=Vartype.SPIN,
         )
         X = np.array(X)
-        ksd.fit_egd(X, feature_dim=5000, n_iter=5000, eta=1e-2)
+        ksd.fit_egd(X, feature_dim=5000, n_iter=500, eta=1e-2)
         corr = EmpiricalDistribution(X, ksd.weight)
         for x in X:
             print(x, corr.pmf(x), ht.pmf(x))

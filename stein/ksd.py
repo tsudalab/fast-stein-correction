@@ -1,7 +1,7 @@
+import warnings
 from typing import Callable, List, Tuple
 
 import cvxopt
-import numexpr as ne
 import numpy as np
 import numpy.linalg as LA
 from cvxopt import solvers
@@ -174,6 +174,7 @@ class DiscreteKSD:
         if self.X_stein_basis is None:
             self.X_stein_basis = self.compute_KP_basis(X, feature_dim=feature_dim)
         K = self.X_stein_basis.dot(self.X_stein_basis.T)
+        self.KP = K
         assert K.shape == (N, N)
         sd = w.dot(K).dot(w)
         X = np.array(X)
@@ -181,10 +182,26 @@ class DiscreteKSD:
         for _ in range(n_iter):
             # flake8: noqa
             grad = (K + K.T).dot(w)
-            # eta = eta / np.max(grad)
-            w_n = ne.evaluate(f"w * exp(- {eta} * grad)")
-            # print(w_n)
-            w_n /= sum(w_n)
+            try:
+                with warnings.catch_warnings(record=True) as warn:
+                    warnings.simplefilter("always")
+                    grad_eta = -eta * grad
+                    w_n = w * np.exp(grad_eta)
+                    w_n /= sum(w_n)
+                    if warn and issubclass(warn[-1].category, RuntimeWarning):
+                        raise RuntimeWarning
+                # w_n = ne.evaluate(f"w * exp(- {eta} * grad)")
+            except RuntimeWarning:
+                # eta = eta / np.max(grad)
+                grad_eta = -eta * grad
+                grad_eta -= np.max(grad_eta)
+                w_n = w * np.exp(grad_eta)
+                if np.max(w_n) == 0:
+                    eta = eta * 0.1
+                    # continue
+                    break
+                w_n /= np.max(w_n)
+                w_n /= sum(w_n)
             history.append(w_n)
             tmp = w_n.dot(K).dot(w_n)
             if tmp < sd:
@@ -212,6 +229,7 @@ def boltzmann_correction(
     eta=1e-5,
     feature_dim=5000,
     mode="egd",
+    start=None,
 ):
     """Utility function to perform Stein correction about Gibbs-Boltzmann distribution.
 
@@ -245,6 +263,9 @@ def boltzmann_correction(
 
     feature_dim :
         Number of random features for approximating base kernel.
+
+    start :
+        Initial weights that the egd starts with.
     """
     trg = GibbsDistribution(hamiltonian, beta, dim, False, vartype)
     ksd = DiscreteKSD(
@@ -255,12 +276,15 @@ def boltzmann_correction(
     )
     start = np.ones(len(samples)) / len(samples)
     weights = np.copy(start)
+    hist = None
     if mode == "egd":
-        ksd.fit_egd(samples, n_iter=n_iter, eta=eta, feature_dim=feature_dim)
+        hist = ksd.fit_egd(
+            samples, n_iter=n_iter, eta=eta, feature_dim=feature_dim, start=start
+        )
     elif mode == "cvxopt":
         basis = ksd.compute_KP_basis(samples, feature_dim=5000)
         ksd.KP = basis.dot(basis.T)
         ksd.fit(samples, start)
     if ksd.weight is not None:
         weights = ksd.weight
-    return weights
+    return weights, ksd.KP, hist
