@@ -86,6 +86,19 @@ class FourierBasis:
     def get_kernel_type(self):
         return self._kernel_type
 
+    # def get_basis(
+    #     self,
+    #     X: List[int or float] or List[List[int or float]],
+    #     vartype: Vartype = Vartype.BINARY,
+    # ):
+    #     if vartype == Vartype.SPIN and self._kernel_type == KernelType.Hamming:
+    #         X = spin2binary(X)
+    #     return (
+    #         np.sqrt(2)
+    #         * np.cos(X.dot(self._params["w"].T) + self._params["b"])
+    #         / np.sqrt(self._feature_dim)
+    #     )
+
     def get_basis(
         self,
         X: List[int or float] or List[List[int or float]],
@@ -93,11 +106,12 @@ class FourierBasis:
     ):
         if vartype == Vartype.SPIN and self._kernel_type == KernelType.Hamming:
             X = spin2binary(X)
-        return (
-            np.sqrt(2)
-            * np.cos(X.dot(self._params["w"].T) + self._params["b"])
-            / np.sqrt(self._feature_dim)
-        )
+        return np.hstack(
+            (
+                np.cos(X.dot(self._params["w"].T) + self._params["b"]),
+                np.sin(X.dot(self._params["w"].T) + self._params["b"]),
+            )
+        ) / np.sqrt(self._feature_dim)
 
 
 class SteinBasis:

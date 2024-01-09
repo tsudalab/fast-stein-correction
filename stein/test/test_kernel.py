@@ -292,7 +292,7 @@ class TestSteinBasis:
             kernel_type=kernel_type,
         )
         X_basis = stein_basis.get_basis(X, vartype=vartype)
-        assert len(X_basis[0]) == domain_dim * feature_dim
+        assert len(X_basis[0]) == domain_dim * feature_dim * 2
 
     def test_get_basis_hamming_binary(self):
         def hamiltonian(x):
